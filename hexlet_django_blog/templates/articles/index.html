@@ -1,2 +1,22 @@
 {% extends "base.html" %}
-{% block content %}<p> Название приложения: {{ app_name }}</p>{% endblock %}
+{% block content %}
+
+<h1>Список статей</h1>
+<a href="{% url 'articles_create' %}">Создать статью</a>
+<table class="table table-striped table-bordered table-hover table-sm table-responsive table-dark">
+    <thead>
+        <tr >
+            <th >Название</th>
+            <th>Описание</th>
+        </tr>
+    </thead >
+    {% for article in articles %}
+    <tbody class="table-group-divider">
+        <tr>
+            <td><a href="{% url 'article' article.id %}">{{ article.name }}</a></td>
+            <td>{{ article.body|slice:":200" }}</td>
+        </tr>
+    </tbody>
+    {% endfor %}
+</table>
+{% endblock %}

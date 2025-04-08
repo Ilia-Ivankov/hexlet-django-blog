@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-center text-primary fw-bold fs-1 mt-5 mb-5">Обновление статьи</h1>
+
+<form action="{% url 'article_update' article.id %}" method="post" class="mt-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Обновить</button>
+</form>
+{% endblock %} 

@@ -1,27 +1,65 @@
-from typing import Any
-from django.shortcuts import render
-from django.http import HttpResponse
-from .apps import ArticleConfig
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 from django.views import View
-from django.views.generic.base import TemplateView
+from .models import Article
+from .forms import ArticleForm
 
 
 class ArticleView(View):
     def get(self, request, *args, **kwargs):
-        tags = kwargs.get("tags")
-        article_id = kwargs.get("article_id")
+        article = get_object_or_404(Article, id=kwargs["id"])
+        return render(
+            request,
+            "articles/show.html",
+            context={
+                "article": article,
+            },
+        )
 
-        if tags and article_id:
-            text = f"Статья номер {article_id}. Тег {tags}"
 
-        return render(request, "articles/article.html", context={"text": text})
+class IndexView(View):
+    def get(self, request, *args, **kwargs):
+        articles = Article.objects.all()[:15]
+        return render(request, "articles/index.html", context={"articles": articles})
 
 
-class ArticleIndexView(TemplateView):
-    template_name = "articles/index.html"
+class ArticleFormCreateView(View):
+    def get(self, request, *args, **kwargs):
+        form = ArticleForm()
+        return render(request, "articles/create.html", {"form": form})
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        app_name = ArticleConfig.name.split(".")[-1]
-        context["app_name"] = app_name
-        return context
+    def post(self, request, *args, **kwargs):
+        form = ArticleForm(request.POST)
+        if form.is_valid():
+            messages.success(request, "Статья успешно сохранена")
+            form.save()
+            return redirect("articles_index_view")
+        else:
+            messages.warning(request, "Есть ошибки, проверьте")
+            return render(request, "articles/create.html", {"form": form})
+
+
+class ArticleUpdateView(View):
+    def get(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=kwargs["id"])
+        form = ArticleForm(instance=article)
+        return render(request, "articles/update.html", {"form": form, "article": article})
+
+    def post(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=kwargs["id"])
+        form = ArticleForm(request.POST, instance=article)
+        if form.is_valid():
+            messages.success(request, "Статья успешно обновлена")
+            form.save()
+            return redirect("article", id=article.id)
+        else:
+            messages.warning(request, "Есть ошибки, проверьте")
+            return render(request, "articles/update.html", {"form": form, "article": article})
+
+
+class ArticleDeleteView(View):
+    def post(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=kwargs["id"])
+        article.delete()
+        messages.success(request, "Статья успешно удалена")
+        return redirect("article_index_view")
